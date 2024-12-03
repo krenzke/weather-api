@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 )
 
-const GOOGLE_API_KEY = "TODO"
 type GoogleGeocodeResponse struct {
 	Results []struct {
 		// AddressComponents []struct {
@@ -68,7 +68,7 @@ func geocodeZipcode(zipcode string) (Location,error) {
 	// no cache hit, go ask google
 	println("Cache miss for ", zipcode)
 
-	url := fmt.Sprintf("https://maps.googleapis.com/maps/api/geocode/json?address=%s&key=%s", zipcode, GOOGLE_API_KEY)
+	url := fmt.Sprintf("https://maps.googleapis.com/maps/api/geocode/json?address=%s&key=%s", zipcode,  os.Getenv("GOOGLE_API_KEY"))
   res, err := http.Get(url)
   if (err != nil) {
     println(err)

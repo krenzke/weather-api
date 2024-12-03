@@ -2,13 +2,13 @@ package main
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
+	"os"
+
+	"github.com/joho/godotenv"
 )
 
-type successResponse struct {
-	Success bool `json:"success"`
-	Data []string `json:"data"`
-}
 
 type errorResponse struct {
 	Success bool `json:"success"`
@@ -25,10 +25,10 @@ func writeErrorResponse(w http.ResponseWriter, err error) {
 }
 
 func getForecast(w http.ResponseWriter, r *http.Request) {
-	println("Go request for", r.PathValue("zipcode"))
+  log.Println("getForecast", r.URL.Path)
 
 	w.Header().Set("Content-Type","application/json")
-  // TODO: setup cache
+
   location, err := geocodeZipcode(r.PathValue("zipcode"))
   if (err != nil) {
     writeErrorResponse(w, err)
@@ -45,8 +45,29 @@ func getForecast(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	println("Starting Server")
+  err := godotenv.Load()
+  if err != nil {
+    log.Fatal("Failed to load .env file",err)
+    return
+  }
+  _, ok := os.LookupEnv("PIRATE_API_KEY")
+  if (!ok) {
+    log.Fatal("Missing PIRATE_API_KEY from .env")
+    return
+  }
+  _, ok = os.LookupEnv("GOOGLE_API_KEY")
+  if (!ok) {
+    log.Fatal("Missing GOOGLE_API_KEY from .env")
+    return
+  }
+
+  port, ok := os.LookupEnv("PORT")
+  if (!ok) {
+    port = "8000"
+  }
+
+  log.Printf("Starting Server, listening on port %s\n", port)
 
   http.HandleFunc("/weather/{zipcode}", getForecast)
-  http.ListenAndServe(":8000", nil)
+  http.ListenAndServe(":" + port, nil)
 }

@@ -4,13 +4,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 )
 
-const WEATHER_API_KEY = "TODO"
-
 func getWeatherData(location Location) ([]byte, error){
-	url := fmt.Sprintf("https://api.pirateweather.net/forecast/%s/%f,%f", WEATHER_API_KEY, location.Lat, location.Lng)
-	println("Getting weather from", url)
+	url := fmt.Sprintf("https://api.pirateweather.net/forecast/%s/%f,%f", os.Getenv("PIRATE_API_KEY"), location.Lat, location.Lng)
 
   res, err := http.Get(url)
   if (err != nil) {
