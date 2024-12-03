@@ -55,10 +55,20 @@ type Location struct{
 	Lng float64
 }
 
-func geocodeZipcode(zipcode string) (Location,error) {
-	url := fmt.Sprintf("https://maps.googleapis.com/maps/api/geocode/json?address=%s&key=%s", zipcode, GOOGLE_API_KEY)
-	println("Geocoding", url)
+var ZipcodeCache = make(map[string]Location)
 
+func geocodeZipcode(zipcode string) (Location,error) {
+	// first, check the cache
+	location, ok := ZipcodeCache[zipcode]
+	if (ok) {
+		println("Cache hit for ", zipcode)
+		return location, nil
+	}
+
+	// no cache hit, go ask google
+	println("Cache miss for ", zipcode)
+
+	url := fmt.Sprintf("https://maps.googleapis.com/maps/api/geocode/json?address=%s&key=%s", zipcode, GOOGLE_API_KEY)
   res, err := http.Get(url)
   if (err != nil) {
     println(err)
@@ -74,9 +84,12 @@ func geocodeZipcode(zipcode string) (Location,error) {
 
   var parsedResponse GoogleGeocodeResponse
   json.Unmarshal(body, &parsedResponse)
-	location := Location{
+	location = Location{
 		Lat: parsedResponse.Results[0].Geometry.Location.Lat,
 		Lng: parsedResponse.Results[0].Geometry.Location.Lng,
 	}
+
+	ZipcodeCache[zipcode] = location
+
 	return location, nil
 }
