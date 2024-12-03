@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 )
@@ -61,12 +62,12 @@ func geocodeZipcode(zipcode string) (Location,error) {
 	// first, check the cache
 	location, ok := ZipcodeCache[zipcode]
 	if (ok) {
-		println("Cache hit for ", zipcode)
+		log.Println("Cache hit for ", zipcode)
 		return location, nil
 	}
 
 	// no cache hit, go ask google
-	println("Cache miss for ", zipcode)
+	log.Println("Cache miss for ", zipcode)
 
 	url := fmt.Sprintf("https://maps.googleapis.com/maps/api/geocode/json?address=%s&key=%s", zipcode,  os.Getenv("GOOGLE_API_KEY"))
   res, err := http.Get(url)
