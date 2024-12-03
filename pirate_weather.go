@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-const WEATHER_API_KEY = "NZW4Rr82dgJLkcNmNEs4NnHDCpx4Ki1Z"
+const WEATHER_API_KEY = "TODO"
 
 func getWeatherData(location Location) ([]byte, error){
 	url := fmt.Sprintf("https://api.pirateweather.net/forecast/%s/%f,%f", WEATHER_API_KEY, location.Lat, location.Lng)

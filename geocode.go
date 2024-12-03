@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-const GOOGLE_API_KEY = "AIzaSyAfa-OIJYaVRyjaHons73d89xB49X9tX94"
+const GOOGLE_API_KEY = "TODO"
 type GoogleGeocodeResponse struct {
 	Results []struct {
 		// AddressComponents []struct {
