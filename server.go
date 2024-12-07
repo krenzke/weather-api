@@ -3,12 +3,12 @@ package main
 import (
 	"encoding/json"
 	"log"
+	"net"
 	"net/http"
 	"os"
 
 	"github.com/joho/godotenv"
 )
-
 
 type errorResponse struct {
 	Success bool `json:"success"`
@@ -46,6 +46,34 @@ func getForecast(w http.ResponseWriter, r *http.Request) {
   w.Write(weatherData)
 }
 
+func healthcheck(w http.ResponseWriter, r *http.Request) {
+  log.Println("healthcheck", r.URL.Path)
+
+	w.Header().Set("Content-Type","application/json")
+	w.Header().Set("Access-Control-Allow-Origin","*")
+	w.Header().Set("Access-Control-Allow-Methods","GET")
+
+  w.Write([]byte("{\"status\":\"OK\"}"))
+}
+
+func setupSocketListener(path string) (net.Listener, error) {
+	_, err := os.Stat(path)
+	if err == nil{
+		os.Remove(path)
+	}
+
+	listener, err := net.Listen("unix", path)
+	if err != nil {
+		return nil, err
+	}
+
+	err = os.Chmod(path, 0777)
+	if err != nil {
+		return nil, err
+	}
+	return listener, nil
+}
+
 func main() {
   err := godotenv.Load()
   if err != nil {
@@ -63,13 +91,38 @@ func main() {
     return
   }
 
-  port, ok := os.LookupEnv("PORT")
-  if (!ok) {
-    port = "8000"
-  }
+	// Set up routing and handlers
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/forecast/{zipcode}", getForecast)
+	mux.HandleFunc("/api/healthcheck", healthcheck)
 
-  log.Printf("Starting Server, listening on port %s\n", port)
+	// Listen to either a unix socket (higher priority)
+	// or a port
+  socketPath, ok := os.LookupEnv("UNIX_SOCKET")
+  if (ok) {
+		// Using Socket
+		log.Println("Listening on socket")
+		log.Println(socketPath)
 
-  http.HandleFunc("/weather/{zipcode}", getForecast)
-  http.ListenAndServe(":" + port, nil)
+		listener, err := setupSocketListener(socketPath)
+		if err != nil {
+			log.Fatal(err.Error())
+			return
+		}
+
+		defer listener.Close()
+
+		server := http.Server{
+			Handler: mux,
+		}
+		server.Serve(listener)
+  } else {
+		// Using Port
+		port, ok := os.LookupEnv("PORT")
+		if (!ok) {
+			port = "8000"
+		}
+		log.Printf("Starting Server, listening on port %s\n", port)
+		http.ListenAndServe(":" + port, mux)
+	}
 }
